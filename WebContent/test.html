@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<script type="text/javascript" src="js/jquery/jquery-1.4.2.js"></script>
+<title>Insert title here</title>
+</head>
+<body>
+<input type="button" value="登录" onClick="test()">
+<input type="button" value="注册" onClick="test1()">
+<input type="button" value="进入游戏" onClick="test2()">
+<input type="button" value="掷骰子" onClick="test3()">
+<script>
+var ws;
+window.onload = function(){	
+	}
+	
+function test1(){
+	$.ajax({
+		url : "http://localhost:8080/sun/Register",
+		type : "post",
+		dataType : "text",
+		data : "{\"type\":\"1\",\"data\":{\"username\":\"sun\",\"password\":\"123456\"}}",
+		success : function(data) {
+			alert(data);
+		}
+	});
+}
+
+function test(){
+	
+	ws = new WebSocket("ws://localhost:8080/sun/websocket1");
+	ws.onmessage = (function(evt){ 
+	//接收到0为对方进入桌子
+	console.log(evt.data);
+	});
+	ws.sendMessage = (function(num) {
+	    var message = num;
+	    if (message != '') {
+	        ws.send(message);
+	    }
+	});
+	ws.onopen = function(event){
+		ws.send("{\"type\":\"2\",\"data\":{\"username\":\"sun\",\"password\":\"123456\"}}");
+	};
+	
+}
+		
+	function test2(){
+		ws.sendMessage("{\"type\":\"4\",\"data\":{\"message\":\"进入游戏\"}}");
+	}   
+	function test3(){
+		ws.sendMessage("{\"type\":\"6\",\"data\":{\"message\":\"掷骰子\"}}");
+	}  
+	function test4(){
+		ws.sendMessage("{\"type\":\"11\",\"data\":{\"message\":\"玩家信息\"}}");
+	}
+	function test5(){
+		ws.sendMessage("{\"type\":\"8\",\"data\":{\"cost\":\"500\",\"index\":\"1\"}}");
+	} 
+	function test6(){
+		ws.sendMessage("{\"type\":\"9\",\"data\":{\"cost\":\"250\"}}");
+	} 
+	function test7(){
+		ws.sendMessage("{\"type\":\"10\",\"data\":{\"lv\":\"1\",\"cost\":\"1000\",\"index\":\"1\"}}");
+	} 
+	function test8(){
+		ws.sendMessage("{\"type\":\"7\",\"data\":{\"password\":\"123456\",\"newPassword\":\"456789\"}}");
+	} 
+	function test9(){
+		ws.sendMessage("{\"type\":\"5\",\"data\":{\"message\":\"离开游戏\"}}");
+	} 
+
+
+		</script>
+</body>
+</html>
