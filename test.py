@@ -4,6 +4,7 @@ import sys
 import time
 import json
 import random
+from com.sun import jsonformat
 url = "http://wx.qq.com"
 
 # class parseLinks(HTMLparser.HTMLParser): 
@@ -52,22 +53,160 @@ uin=xmldata[xmldata.find("<wxuin>")+7:xmldata.find("</wxuin>")]
 pass_ticket=xmldata[xmldata.find("<pass_ticket>")+13:xmldata.find("</pass_ticket>")]
 
 
-
+DeviceId='e' + repr(random.random())[2:17]
 params = {
 'BaseRequest' :    {
             'Uin': int(uin),
             'Sid': sid,
             'Skey': skey,
-            'DeviceID': 'e' + repr(random.random())[2:17],
+            'DeviceID': DeviceId,
         }
 } 
+
+
+
+
 print("参数："+params.get('BaseRequest').get('DeviceID')) 
 #初始化信息
 req = urllib.request.Request("https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxinit?r=%s&pass_ticket=%s" % (int(time.time()),pass_ticket),json.dumps(params).encode(encoding='UTF8'))
 req.add_header('ContentType','application/json; charset=UTF-8' ) 
 initdata = urllib.request.urlopen(req).read().decode('UTF-8')
 
-print(json.loads(initdata))
+jsondata=json.loads(initdata)
+print(jsondata)
+
+print(jsondata['User']['UserName'])
+
+
+synckey='|'.join(
+            [str(keyVal['Key']) + '_' + str(keyVal['Val']) for keyVal in jsondata['SyncKey']['List']])
+
+
+ToUserName=""
+for contact in jsondata['ContactList']:
+    if contact['NickName']=='拒绝黄赌毒':
+        ToUserName=contact['UserName']
+        break;
+xiaobingId=''
+    
+while 1==1:
+    time.sleep(3) 
+    params = { 
+         'BaseRequest': { 'Uin': int(uin), 'Sid': sid, 'Skey': skey, 'DeviceID': DeviceId }, 
+         'SyncKey': jsondata['SyncKey'], 
+         'rr': ~int(time.time())
+    }
+    str1=jsonformat.someutil().toJson(params,"")
+    print(str1)
+    req = urllib.request.Request('https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxsync?sid=%s&skey=%s&lang=zh_CN&pass_ticket=%s' % (sid, skey,pass_ticket),str1.encode('UTF-8'))
+    req.add_header('ContentType','application/json; charset=UTF-8' ) 
+    initdata = urllib.request.urlopen(req).read().decode('UTF-8')
+    print(json.loads(initdata))    
+    #     手动填入小冰ID
+    
+    if xiaobingId =='':
+        xiaobingId=input()
+        print(xiaobingId)
+        if xiaobingId !='':
+            break
+        
+    
+    
+#     str1=jsonformat.someutil().toJson(params,"")
+#     req = urllib.request.urlopen('https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxsync?sid=%s&skey=%s&pass_ticket=%s' % (sid, skey, pass_ticket),str1.encode('UTF-8'))
+#     req.add_header('ContentType','application/json; charset=UTF-8' ) 
+#     initdata = urllib.request.urlopen(req).read().decode('UTF-8')
+#     print(json.loads(initdata))
+
+
+while 1==1:
+    params = { 
+         'BaseRequest': { 'Uin': int(uin), 'Sid': sid, 'Skey': skey, 'DeviceID': DeviceId }, 
+         'SyncKey': jsondata['SyncKey'], 
+         'rr': ~int(time.time())
+    }
+    str1=jsonformat.someutil().toJson(params,"")
+    print(str1)
+    req = urllib.request.Request('https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxsync?sid=%s&skey=%s&lang=zh_CN&pass_ticket=%s' % (sid, skey,pass_ticket),str1.encode('UTF-8'))
+    req.add_header('ContentType','application/json; charset=UTF-8' ) 
+    initdata = urllib.request.urlopen(req).read().decode('UTF-8')
+    SyncKey=json.loads(initdata)['SyncKey']
+    
+    randomNum=str(int(time.time() * 1000)) + \
+                str(random.random())[:5].replace('.', '')
+    for msgAdd in json.loads(initdata)['AddMsgList']:
+        if msgAdd['FromUserName']==ToUserName:
+            print('向小冰发送'+msgAdd['Content'])
+            params = { 
+                      'BaseRequest': { 'Uin': int(uin), 'Sid': sid, 'Skey': skey, 'DeviceID': DeviceId }, 
+                    'Msg': { 
+                         'Type': 1 , 
+                         'Content': msgAdd['Content'], 
+                         'FromUserName': jsondata['User']['UserName'], 
+                         'ToUserName': xiaobingId, 
+                         'LocalID': randomNum, 
+                         'ClientMsgId': randomNum 
+                    } 
+            }
+            str1=jsonformat.someutil().toJson(params,"")
+            req = urllib.request.Request("https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxsendmsg?pass_ticket=%s" % (pass_ticket),str1.encode('UTF-8'))
+            req.add_header('ContentType','application/json; charset=UTF-8' ) 
+            initdata = urllib.request.urlopen(req).read().decode('UTF-8')
+            
+    time.sleep(3)
+            
+    params = { 
+         'BaseRequest': { 'Uin': int(uin), 'Sid': sid, 'Skey': skey, 'DeviceID': DeviceId }, 
+         'SyncKey': SyncKey, 
+         'rr': ~int(time.time())
+    }
+    str1=jsonformat.someutil().toJson(params,"")
+#     print(str1)
+    req = urllib.request.Request('https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxsync?sid=%s&skey=%s&lang=zh_CN&pass_ticket=%s' % (sid, skey,pass_ticket),str1.encode('UTF-8'))
+    req.add_header('ContentType','application/json; charset=UTF-8' ) 
+    initdata = urllib.request.urlopen(req).read().decode('UTF-8')
+#     print(json.loads(initdata))
+    for msgAdd in json.loads(initdata)['AddMsgList']:
+        if msgAdd['FromUserName']==xiaobingId:
+            print("小冰回复："+msgAdd['Content'])
+            params = { 
+                      'BaseRequest': { 'Uin': int(uin), 'Sid': sid, 'Skey': skey, 'DeviceID': DeviceId }, 
+                    'Msg': { 
+                         'Type': 1 , 
+                         'Content': msgAdd['Content'], 
+                         'FromUserName': jsondata['User']['UserName'], 
+                         'ToUserName': ToUserName, 
+                         'LocalID': randomNum, 
+                         'ClientMsgId': randomNum 
+                    } 
+            }
+            str1=jsonformat.someutil().toJson(params,"")
+            req = urllib.request.Request("https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxsendmsg?pass_ticket=%s" % (pass_ticket),str1.encode('UTF-8'))
+            req.add_header('ContentType','application/json; charset=UTF-8' ) 
+            initdata = urllib.request.urlopen(req).read().decode('UTF-8')
+    
+#     sendMsg = input();
+#     randomNum=str(int(time.time() * 1000)) + \
+#                 str(random.random())[:5].replace('.', '')
+#     params = { 
+#          'BaseRequest': { 'Uin': int(uin), 'Sid': sid, 'Skey': skey, 'DeviceID': DeviceId }, 
+#          'Msg': { 
+#              'Type': 1 , 
+#              'Content': sendMsg, 
+#              'FromUserName': jsondata['User']['UserName'], 
+#              'ToUserName': ToUserName, 
+#              'LocalID': randomNum, 
+#              'ClientMsgId': randomNum 
+#          } 
+#     }
+#     str1=jsonformat.someutil().toJson(params,"")
+#     req = urllib.request.Request("https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxsendmsg?pass_ticket=%s" % (pass_ticket),str1.encode('UTF-8'))
+#     req.add_header('ContentType','application/json; charset=UTF-8' ) 
+#     initdata = urllib.request.urlopen(req).read().decode('UTF-8')
+#     
+#     print(json.loads(initdata))
+
+
 
 # randomNum=str(int(time.time() * 1000)) + \
 #             str(random.random())[:5].replace('.', '')
