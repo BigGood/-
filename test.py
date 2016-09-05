@@ -136,8 +136,8 @@ SyncHost = [
             'webpush.wechat.com',
             'webpush1.wechat.com',
             'webpush2.wechat.com',
-            'webpush1.wechatapp.com',
-            # 'webpush.wechatapp.com'
+#             'webpush1.wechatapp.com',
+            'webpush.wx.qq.com'
         ]
 for hosts in SyncHost:
     r=int(time.time())
@@ -152,8 +152,9 @@ for hosts in SyncHost:
     }
     str1=jsonformat.someutil().toJson(params,"")
 #     print(str1)
-    req = urllib.request.Request('https://'+hosts+'/cgi-bin/mmwebwx-bin/synccheck?r=%s&skey=%s&sid=%s&synckey=%s' % (r, skey,sid,syncKeyStr),str1.encode('UTF-8'))
-    req.add_header('ContentType','application/json; charset=UTF-8' ) 
+    req = urllib.request.Request('https://'+hosts+'/cgi-bin/mmwebwx-bin/synccheck?r=%s&sid=%s&uin=%s&skey=%s&deviceid=%s&synckey=%s&_=%s' % (r,sid,int(uin),skey,DeviceId,syncKeyStr,int(time.time())),method='get')
+#     req.add_header('ContentType','application/json; charset=UTF-8' )
+    req.add_header('Referer', 'https://wx.qq.com/?&lang=zh_CN')
     initdata = urllib.request.urlopen(req).read().decode('UTF-8')
     print(initdata)
     if initdata[initdata.find("retcode:\"")+9:initdata.find("\",")]=="0":
